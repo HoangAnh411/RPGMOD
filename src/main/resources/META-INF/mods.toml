@@ -10,7 +10,7 @@ authors="Hoang Anh"
 logoFile=""
 
 [[dependencies.rpgpack]]
-    modId="neoforge"
+    modId="forge"
     mandatory=true
     versionRange="[47,)"
     ordering="NONE"

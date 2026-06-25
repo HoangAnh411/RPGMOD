@@ -40,7 +40,7 @@ minecraft {
 }
 
 dependencies {
-    minecraft "net.neoforged:forge:1.20.1-47.1.106"
+    minecraft "net.minecraftforge:forge:1.20.1-47.1.106"
 }
 
 tasks.withType(JavaCompile).configureEach {
