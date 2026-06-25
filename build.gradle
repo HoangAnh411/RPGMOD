@@ -1,5 +1,5 @@
 plugins {
-    id 'net.neoforged.gradle' version '[6.0.13,6.1)'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
 }
 
 group = 'com.rpgpack'
