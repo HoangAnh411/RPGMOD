@@ -1,6 +1,5 @@
 package com.rpgpack.skills;
 
-import com.rpgpack.core.PlayerCapability;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;

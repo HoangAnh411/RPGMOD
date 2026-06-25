@@ -22,6 +22,7 @@ v0.1 CORE PLAYABLE — COMPLETE
 - [X] DerivedStats (15 derived stats, Builder pattern)
 - [X] StatCalculator (all formulas, single source of truth)
 - [X] PlayerCapability (Forge capability + NBT serialization)
+- [ ] 
 - [X] PlayerTickHandler (stamina/mana/hp regen every tick)
 
 ### Class System (02_CLASS_SYSTEM.md)

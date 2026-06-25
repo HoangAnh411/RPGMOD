@@ -20,7 +20,10 @@ public class SyncPlayerDataS2C {
 
     public static SyncPlayerDataS2C decode(FriendlyByteBuf buf) {
         PlayerData data = new PlayerData();
-        data.fromNBT(buf.readNbt());
+        var tag = buf.readNbt();
+        if (tag != null) {
+            data.fromNBT(tag);
+        }
         return new SyncPlayerDataS2C(data);
     }
 

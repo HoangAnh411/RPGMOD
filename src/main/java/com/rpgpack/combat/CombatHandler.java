@@ -1,7 +1,6 @@
 package com.rpgpack.combat;
 
 import com.rpgpack.core.PlayerCapability;
-import com.rpgpack.core.PlayerData;
 import com.rpgpack.core.DerivedStats;
 import com.rpgpack.core.StatCalculator;
 import com.rpgpack.RPGPack;

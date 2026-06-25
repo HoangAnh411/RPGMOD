@@ -2,8 +2,6 @@ package com.rpgpack.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.rpgpack.core.PlayerCapability;
-import com.rpgpack.init.ModMessages;
-import com.rpgpack.network.UseSkillC2S;
 import com.rpgpack.skills.BaseSkill;
 import com.rpgpack.skills.SkillRegistry;
 import net.minecraft.client.Minecraft;
