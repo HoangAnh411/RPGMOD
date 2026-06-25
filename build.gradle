@@ -1,5 +1,5 @@
 plugins {
-    id 'net.neoforged.gradle' version '6.0.0'
+    id 'net.neoforged.gradle' version '[6.0.13,6.1)'
 }
 
 group = 'com.rpgpack'
@@ -11,6 +11,7 @@ java {
 }
 
 minecraft {
+    version = '1.20.1'
     mappings channel: 'official', version: '1.20.1'
 
     runs {
@@ -38,28 +39,8 @@ minecraft {
     }
 }
 
-repositories {
-    mavenCentral()
-    maven { url = 'https://maven.theillusivec4.top/' }
-    maven { url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
-    maven { url = 'https://maven.blamejared.com/' }
-}
-
 dependencies {
-    minecraft 'net.neoforged:forge:1.20.1-47.1.0'
-
-    // Curios API
-    runtimeOnly fg.deobf("top.theillusivec4.curios:curios-forge:5.2.0-beta.3+1.20.1")
-    compileOnly fg.deobf("top.theillusivec4.curios:curios-forge:5.2.0-beta.3+1.20.1:api")
-
-    // GeckoLib (recommended)
-    runtimeOnly fg.deobf("software.bernie.geckolib:geckolib-forge-1.20.1:4.2.2")
-
-    // Jade (optional)
-    compileOnly fg.deobf("curse.maven:jade-324717:4686500")
-
-    // JEI (optional)
-    compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:15.2.0.27")
+    minecraft "net.neoforged:forge:1.20.1-47.1.106"
 }
 
 tasks.withType(JavaCompile).configureEach {
