@@ -7,6 +7,7 @@ import com.rpgpack.skills.BaseSkill;
 import com.rpgpack.skills.SkillRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
@@ -45,6 +46,7 @@ public class SkillHotbarOverlay {
     }
 
     private static PlayerData cachedData;
+    private static Player cachedPlayer;
     private static String cachedClassName;
     private static ClassType cachedClassType;
     private static List<BaseSkill> cachedSkills;
@@ -52,6 +54,14 @@ public class SkillHotbarOverlay {
     public static final IGuiOverlay SKILL_HOTBAR = (gui, g, partialTick, screenWidth, screenHeight) -> {
         var player = Minecraft.getInstance().player;
         if (player == null || Minecraft.getInstance().options.hideGui) return;
+
+        if (player != cachedPlayer) {
+            cachedPlayer = player;
+            cachedData = null;
+            cachedClassName = null;
+            cachedClassType = null;
+            cachedSkills = null;
+        }
 
         var data = cachedData;
         if (data == null) {
@@ -117,7 +127,15 @@ public class SkillHotbarOverlay {
             int oh = (int) (SLOT_H * pct);
             g.fill(x, y, x + SLOT_W, y + oh, 0x88_000000);
 
-            String cdText = cd >= 20 ? (cd/20 + "s") : String.format("%.1f", cd/20f);
+            String cdText;
+            if (cd >= 20) {
+                cdText = (cd / 20) + "s";
+            } else {
+                float secs = cd / 20f;
+                int whole = (int) secs;
+                int frac = (int) (secs * 10f) % 10;
+                cdText = whole + "." + frac + "s";
+            }
             g.drawCenteredString(font, cdText, x + SLOT_W/2, y + SLOT_H/2 - 4, 0xFF_FF4444);
         } else if (locked) {
             g.drawCenteredString(font, "Lv" + skill.getUnlockLevel(), x + SLOT_W/2, y + SLOT_H/2 - 4, 0xFF_888888);

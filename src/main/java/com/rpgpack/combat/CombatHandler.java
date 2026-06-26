@@ -5,9 +5,11 @@ import com.rpgpack.core.DerivedStats;
 import com.rpgpack.RPGPack;
 import com.rpgpack.init.ModMessages;
 import com.rpgpack.network.FloatingDamageS2C;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
@@ -24,14 +26,23 @@ import java.util.UUID;
 public class CombatHandler {
 
     private static final Random RANDOM = new Random();
-    // Track pending attacks for MISS detection (UUID -> server tick when attack started)
-    private static final Map<UUID, Integer> pendingAttacks = new HashMap<>();
+    private static final Map<UUID, PendingAttack> pendingAttacks = new HashMap<>();
     private static int serverTickCounter = 0;
+
+    private static class PendingAttack {
+        final int tick;
+        final ResourceKey<Level> dimension;
+        PendingAttack(int tick, ResourceKey<Level> dimension) {
+            this.tick = tick;
+            this.dimension = dimension;
+        }
+    }
 
     @SubscribeEvent
     public static void onAttackEntity(AttackEntityEvent event) {
         if (event.getTarget() instanceof LivingEntity target && !event.getEntity().level().isClientSide) {
-            pendingAttacks.put(target.getUUID(), serverTickCounter);
+            pendingAttacks.put(target.getUUID(),
+                    new PendingAttack(serverTickCounter, event.getEntity().level().dimension()));
         }
     }
 
@@ -141,17 +152,12 @@ public class CombatHandler {
         var iter = pendingAttacks.entrySet().iterator();
         while (iter.hasNext()) {
             var e = iter.next();
-            if (serverTickCounter - e.getValue() > 1) {
+            PendingAttack pa = e.getValue();
+            if (serverTickCounter - pa.tick > 1) {
                 iter.remove();
                 UUID id = e.getKey();
-                var entity = event.getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD).getEntity(id);
-                if (entity == null) {
-                    entity = event.getServer().getLevel(net.minecraft.world.level.Level.NETHER).getEntity(id);
-                }
-                if (entity == null) {
-                    entity = event.getServer().getLevel(net.minecraft.world.level.Level.END).getEntity(id);
-                }
-                if (entity instanceof LivingEntity le) {
+                var level = event.getServer().getLevel(pa.dimension);
+                if (level != null && level.getEntity(id) instanceof LivingEntity le) {
                     ModMessages.CHANNEL.send(
                             PacketDistributor.TRACKING_ENTITY.with(() -> le),
                             new FloatingDamageS2C(le.getId(), 0, FloatingDamageS2C.TYPE_MISS,

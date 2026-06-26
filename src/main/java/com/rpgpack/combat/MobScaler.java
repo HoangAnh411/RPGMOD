@@ -14,6 +14,8 @@ public class MobScaler {
         ELITE   (4,"Elite",  0xFF_FF8800, 7.0f,  0.009f),
         BOSS    (5,"Boss",   0xFF_FF4444, 12.0f, 0.001f);
 
+        public static final BossTier[] VALUES = values();
+
         public final int tier;
         public final String name;
         public final int color;
@@ -29,9 +31,8 @@ public class MobScaler {
             float distBonus = (float) Math.min(distFromSpawn / 3000.0, 0.5);
             float roll = (float) Math.random();
             float cumulative = 0;
-            BossTier[] tiers = values();
-            for (int i = tiers.length - 1; i >= 1; i--) {
-                BossTier t = tiers[i];
+            for (int i = VALUES.length - 1; i >= 1; i--) {
+                BossTier t = VALUES[i];
                 float chance = t.baseChance * (1f + distBonus * 2f);
                 if (roll >= (1f - chance)) return t;
             }
@@ -65,7 +66,7 @@ public class MobScaler {
 
     public static BossTier getTier(LivingEntity entity) {
         int t = entity.getPersistentData().getInt("rpg_tier");
-        for (BossTier bt : BossTier.values()) if (bt.tier == t) return bt;
+        for (BossTier bt : BossTier.VALUES) if (bt.tier == t) return bt;
         return BossTier.NONE;
     }
 

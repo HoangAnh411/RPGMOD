@@ -328,7 +328,10 @@ public class PlayerData {
 
     public DerivedStats getCachedStats(net.minecraft.world.entity.player.Player player) {
         if (statsDirty || cachedStats == null) {
-            StatCalculator.applyItemBonuses(this, player); // always read current equipment
+            // Client needs fresh item bonuses (server ItemStatApplier doesn't run here)
+            if (player.level().isClientSide) {
+                StatCalculator.applyItemBonuses(this, player);
+            }
             cachedStats = StatCalculator.calculate(this, player);
             statsDirty = false;
         }

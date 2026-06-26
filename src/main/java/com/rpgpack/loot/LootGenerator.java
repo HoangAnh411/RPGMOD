@@ -42,23 +42,24 @@ public class LootGenerator {
         tag.putString("rpg_rarity", rarity.name());
         tag.putInt("rpg_level", mobLevel);
 
-        int statCount = rarity.tier + 1;
-        Set<Integer> picked = new HashSet<>();
+        int statCount = Math.min(rarity.tier + 1, STAT_NAMES.length);
+        int pickedMask = 0;
+        int firstPicked = -1;
 
-        for (int i = 0; i < statCount && i < STAT_NAMES.length; i++) {
+        for (int i = 0; i < statCount; i++) {
             int idx;
-            do { idx = RNG.nextInt(STAT_NAMES.length); } while (picked.contains(idx));
-            picked.add(idx);
+            do { idx = RNG.nextInt(STAT_NAMES.length); } while ((pickedMask & (1 << idx)) != 0);
+            pickedMask |= (1 << idx);
+            if (firstPicked < 0) firstPicked = idx;
 
             float value = rollStatValue(idx, rarity, mobLevel);
             tag.putFloat("rpg_" + STAT_NAMES[idx], value);
         }
 
         // Affix: pick one random stat that was rolled as the "affix" name suffix
-        if (!picked.isEmpty()) {
-            int affixIdx = picked.iterator().next();
+        if (firstPicked >= 0) {
             int affixTier = Math.min(rarity.tier / 2, 2);
-            tag.putString("rpg_affix", AFFIXES[affixIdx][affixTier]);
+            tag.putString("rpg_affix", AFFIXES[firstPicked][affixTier]);
         }
     }
 
