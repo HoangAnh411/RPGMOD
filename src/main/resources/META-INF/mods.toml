@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="rpgpack"
+version="0.2.2"
+displayName="RPGPACK"
+description="MMORPG system for Minecraft inspired by SAO, Elden Ring, and Genshin Impact"
+authors="Hoang Anh"
+logoFile=""
+
+[[dependencies.rpgpack]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47.2,48)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.rpgpack]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
