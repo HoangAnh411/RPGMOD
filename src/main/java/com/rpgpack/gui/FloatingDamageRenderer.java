@@ -57,12 +57,17 @@ public class FloatingDamageRenderer {
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
-        for (int i = entries.size() - 1; i >= 0; i--) {
+        int i = 0;
+        while (i < entries.size()) {
             var e = entries.get(i);
             e.age++;
             e.y += 0.04;
             if (e.age >= LIFETIME) {
-                entries.remove(i);
+                int last = entries.size() - 1;
+                entries.set(i, entries.get(last));
+                entries.remove(last);
+            } else {
+                i++;
             }
         }
     }

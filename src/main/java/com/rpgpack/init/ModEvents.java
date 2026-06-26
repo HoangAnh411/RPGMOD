@@ -11,6 +11,9 @@ import com.rpgpack.network.OpenClassSelectionS2C;
 import com.rpgpack.network.SyncPlayerDataS2C;
 import com.rpgpack.skills.SkillCooldownManager;
 import com.rpgpack.skills.SkillRegistry;
+
+import java.util.Map;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -78,16 +81,18 @@ public class ModEvents {
                         NetworkDirection.PLAY_TO_CLIENT
                 );
 
-                // Sync cooldowns
+                // Sync cooldowns (single batch packet)
+                Map<String, Integer> batchCd = new java.util.HashMap<>();
                 for (var skill : SkillRegistry.getAll().values()) {
                     int cd = SkillCooldownManager.getCooldown(player, skill.getSkillId());
-                    if (cd > 0) {
-                        ModMessages.CHANNEL.sendTo(
-                                new CooldownSyncS2C(skill.getSkillId(), cd),
-                                player.connection.connection,
-                                NetworkDirection.PLAY_TO_CLIENT
-                        );
-                    }
+                    if (cd > 0) batchCd.put(skill.getSkillId(), cd);
+                }
+                if (!batchCd.isEmpty()) {
+                    ModMessages.CHANNEL.sendTo(
+                            new CooldownSyncS2C(batchCd),
+                            player.connection.connection,
+                            NetworkDirection.PLAY_TO_CLIENT
+                    );
                 }
             });
         }

@@ -20,11 +20,17 @@ public class RpgStatusOverlay {
     private static final int MARGIN = 10;
 
     private static PlayerData cachedData;
+    private static net.minecraft.world.entity.player.Player cachedPlayer;
 
     public static final IGuiOverlay RPG_BARS = (gui, g, partialTick, screenWidth, screenHeight) -> {
         var player = Minecraft.getInstance().player;
         if (player == null) return;
         if (Minecraft.getInstance().options.hideGui) return;
+
+        if (player != cachedPlayer) {
+            cachedPlayer = player;
+            cachedData = null;
+        }
 
         var data = cachedData;
         if (data == null) {
@@ -35,8 +41,9 @@ public class RpgStatusOverlay {
         if ("NONE".equals(data.getSelectedClass())) return;
 
         var stats = data.getCachedStats(player);
+        int barTotalH = (BAR_HEIGHT + BAR_GAP) * 2;
         int x = MARGIN;
-        int y = MARGIN;
+        int y = screenHeight - barTotalH - MARGIN;
 
         renderBar(g, x, y, BAR_WIDTH, BAR_HEIGHT,
                 player.getHealth(), player.getMaxHealth(),

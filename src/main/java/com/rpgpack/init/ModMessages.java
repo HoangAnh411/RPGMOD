@@ -8,6 +8,7 @@ import com.rpgpack.network.FloatingDamageS2C;
 import com.rpgpack.network.OpenClassSelectionS2C;
 import com.rpgpack.network.RankUpC2S;
 import com.rpgpack.network.SyncPlayerDataS2C;
+import com.rpgpack.network.SyncVitalsS2C;
 import com.rpgpack.network.UseSkillC2S;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
@@ -42,5 +43,7 @@ public class ModMessages {
                 RankUpC2S::encode, RankUpC2S::decode, RankUpC2S::handle);
         CHANNEL.registerMessage(id++, FloatingDamageS2C.class,
                 FloatingDamageS2C::encode, FloatingDamageS2C::decode, FloatingDamageS2C::handle);
+        CHANNEL.registerMessage(id++, SyncVitalsS2C.class,
+                SyncVitalsS2C::encode, SyncVitalsS2C::decode, SyncVitalsS2C::handle);
     }
 }

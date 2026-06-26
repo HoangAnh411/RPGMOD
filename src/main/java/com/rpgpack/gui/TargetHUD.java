@@ -23,6 +23,12 @@ public class TargetHUD {
     private static final int SWITCH_THRESHOLD = 8;
     private static final double TARGET_RANGE = 30;
 
+    // Cache: avoid NBT reads + String allocation every frame
+    private static int cachedTargetEntityId = -1;
+    private static String cachedTargetName = "";
+    private static int cachedTierVal = 0;
+    private static com.rpgpack.combat.MobScaler.BossTier cachedTier = com.rpgpack.combat.MobScaler.BossTier.NONE;
+
     @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = "rpgpack")
     public static class TickHandler {
         @SubscribeEvent
@@ -70,11 +76,22 @@ public class TargetHUD {
         int level = Math.max(1, Math.round((maxHp - 18f) / 5f));
         Font font = mc.font;
 
-        int tierVal = target.getPersistentData().getInt("rpg_tier");
-        com.rpgpack.combat.MobScaler.BossTier tier = com.rpgpack.combat.MobScaler.BossTier.NONE;
-        for (var bt : com.rpgpack.combat.MobScaler.BossTier.values()) {
-            if (bt.tier == tierVal) { tier = bt; break; }
+        // Use cached tier/name — only recompute when target entity changes
+        int tierVal;
+        com.rpgpack.combat.MobScaler.BossTier tier;
+        String name;
+        int targetId = target.getId();
+        if (targetId != cachedTargetEntityId) {
+            cachedTargetEntityId = targetId;
+            cachedTargetName = target.getName().getString();
+            cachedTierVal = target.getPersistentData().getInt("rpg_tier");
+            var tiers = com.rpgpack.combat.MobScaler.BossTier.VALUES;
+            cachedTier = (cachedTierVal >= 0 && cachedTierVal < tiers.length)
+                    ? tiers[cachedTierVal] : com.rpgpack.combat.MobScaler.BossTier.NONE;
         }
+        tierVal = cachedTierVal;
+        tier = cachedTier;
+        name = cachedTargetName;
         boolean hasTier = tier.tier >= 1;
 
         int pw = hasTier ? (tier.tier >= 4 ? 150 : 130) : 100;
@@ -93,7 +110,6 @@ public class TargetHUD {
 
         int cx = px + pw / 2;
 
-        String name = target.getName().getString();
         String line1;
         if (hasTier && !tier.name.isEmpty()) {
             line1 = "[" + tier.name + "] Lv." + level + " " + name;

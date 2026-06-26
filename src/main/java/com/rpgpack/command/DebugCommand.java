@@ -3,6 +3,7 @@ package com.rpgpack.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.rpgpack.RPGPack;
 import com.rpgpack.classes.ClassType;
+import com.rpgpack.combat.MobScaler;
 import com.rpgpack.core.PlayerCapability;
 import com.rpgpack.core.PlayerData;
 import com.rpgpack.core.StatCalculator;
@@ -14,7 +15,13 @@ import com.rpgpack.skills.SkillRegistry;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkDirection;
 
 public class DebugCommand {
@@ -146,6 +153,27 @@ public class DebugCommand {
                             ctx.getSource().sendSuccess(
                                     () -> Component.literal("§a[Salvage] " + rarity.name + " → "
                                             + materialCount + "x " + material.getDescription().getString()),
+                                    false);
+                            return 1;
+                        }))
+                        .then(Commands.literal("bosstest").executes(ctx -> {
+                            ServerPlayer player = ctx.getSource().getPlayerOrException();
+                            ServerLevel level = player.serverLevel();
+                            Vec3 look = player.getLookAngle();
+                            Vec3 spawnPos = player.position().add(look.x * 3, 0, look.z * 3);
+
+                            Zombie boss = new Zombie(EntityType.ZOMBIE, level);
+                            boss.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
+                            boss.getAttribute(Attributes.MAX_HEALTH).setBaseValue(500);
+                            boss.setHealth(500);
+                            boss.getPersistentData().putInt("rpg_level", 50);
+                            boss.getPersistentData().putInt("rpg_tier", MobScaler.BossTier.BOSS.tier);
+                            boss.setCustomName(Component.literal("[BOSS] Lv.50 Test Boss").withStyle(s -> s.withColor(0xFF_FF4444)));
+                            boss.setCustomNameVisible(true);
+                            level.addFreshEntity(boss);
+
+                            ctx.getSource().sendSuccess(
+                                    () -> Component.literal("§c[BossTest] BOSS spawned! 500HP, Lv50. Good luck!"),
                                     false);
                             return 1;
                         }))

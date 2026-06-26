@@ -6,6 +6,7 @@ import com.rpgpack.core.PlayerData;
 import com.rpgpack.loot.ItemStatApplier;
 import com.rpgpack.init.ModMessages;
 import com.rpgpack.network.SyncPlayerDataS2C;
+import com.rpgpack.network.SyncVitalsS2C;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.TickEvent;
@@ -67,9 +68,12 @@ public class PlayerTickHandler {
 
             // Dirty sync every 0.5s — only when values changed
             if (player.tickCount % 10 == 0) {
-                float lastMana = lastSyncedMana.getOrDefault(uuid, -1f);
-                float lastHp = lastSyncedHp.getOrDefault(uuid, -1f);
-                int lastExp = lastSyncedExp.getOrDefault(uuid, -1);
+                Float lm = lastSyncedMana.get(uuid);
+                float lastMana = lm != null ? lm : -1f;
+                Float lh = lastSyncedHp.get(uuid);
+                float lastHp = lh != null ? lh : -1f;
+                Integer le = lastSyncedExp.get(uuid);
+                int lastExp = le != null ? le : -1;
 
                 float curMana = data.getCurrentMana();
                 float curHp = data.getCurrentHp();
@@ -79,7 +83,7 @@ public class PlayerTickHandler {
                     lastSyncedMana.put(uuid, curMana);
                     lastSyncedHp.put(uuid, curHp);
                     lastSyncedExp.put(uuid, curExp);
-                    syncData(player, data);
+                    syncVitals(player, curHp, curMana, curExp);
                 }
             }
         });
@@ -132,6 +136,14 @@ public class PlayerTickHandler {
         snap.copyFrom(data);
         ModMessages.CHANNEL.sendTo(
                 new SyncPlayerDataS2C(snap),
+                player.connection.connection,
+                NetworkDirection.PLAY_TO_CLIENT
+        );
+    }
+
+    private static void syncVitals(ServerPlayer player, float hp, float mana, int exp) {
+        ModMessages.CHANNEL.sendTo(
+                new SyncVitalsS2C(hp, mana, exp),
                 player.connection.connection,
                 NetworkDirection.PLAY_TO_CLIENT
         );
