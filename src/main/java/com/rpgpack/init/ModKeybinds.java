@@ -20,16 +20,40 @@ public class ModKeybinds {
             CATEGORY
     );
 
-    public static final KeyMapping SKILLS_SCREEN = new KeyMapping(
-            "key.rpgpack.skills",
+    public static final KeyMapping SKILL_1 = new KeyMapping(
+            "key.rpgpack.skill1",
             InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_K,
+            GLFW.GLFW_KEY_R,
+            CATEGORY
+    );
+
+    public static final KeyMapping SKILL_2 = new KeyMapping(
+            "key.rpgpack.skill2",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_G,
+            CATEGORY
+    );
+
+    public static final KeyMapping SKILL_3 = new KeyMapping(
+            "key.rpgpack.skill3",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_C,
+            CATEGORY
+    );
+
+    public static final KeyMapping SKILL_4 = new KeyMapping(
+            "key.rpgpack.skill4",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_V,
             CATEGORY
     );
 
     @SubscribeEvent
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(CHARACTER_SCREEN);
-        event.register(SKILLS_SCREEN);
+        event.register(SKILL_1);
+        event.register(SKILL_2);
+        event.register(SKILL_3);
+        event.register(SKILL_4);
     }
 }

@@ -1,5 +1,6 @@
 package com.rpgpack.classes;
 
+import com.rpgpack.RPGPack;
 import com.rpgpack.core.PlayerData;
 
 public class ClassManager {
@@ -22,6 +23,11 @@ public class ClassManager {
         var stats = com.rpgpack.core.StatCalculator.calculate(data);
         data.setCurrentHp(stats.maxHp);
         data.setCurrentMana(stats.maxMana);
-        data.setCurrentStamina(stats.maxStamina);
+        data.markStatsDirty();
+
+        RPGPack.LOGGER.info("[CLASS] ClassManager applied: {} | STR={} VIT={} END={} AGI={} DEX={} INT={} WIS={} LUK={}",
+                type.getDisplayName(),
+                data.getStr(), data.getVit(), data.getEnd(), data.getAgi(),
+                data.getDex(), data.getInt(), data.getWis(), data.getLuk());
     }
 }

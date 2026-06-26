@@ -35,12 +35,16 @@ public class SkillCooldownManager {
 
         for (var entry : cooldowns.entrySet()) {
             var map = entry.getValue();
-            map.entrySet().removeIf(e -> {
-                int remaining = e.getValue() - 1;
-                if (remaining <= 0) return true;
-                e.setValue(remaining);
-                return false;
-            });
+            var iter = map.entrySet().iterator();
+            while (iter.hasNext()) {
+                var skillEntry = iter.next();
+                int remaining = skillEntry.getValue() - 1;
+                if (remaining <= 0) {
+                    iter.remove();
+                } else {
+                    skillEntry.setValue(remaining);
+                }
+            }
             if (map.isEmpty()) {
                 cooldowns.remove(entry.getKey());
             }

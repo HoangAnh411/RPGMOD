@@ -1,10 +1,11 @@
 modLoader="javafml"
 loaderVersion="[47,)"
+license="MIT"
 
 [[mods]]
 modId="rpgpack"
-version="0.1.0"
-displayName="RPGPACK - Echoes of Aincrad"
+version="0.2.2"
+displayName="RPGPACK"
 description="MMORPG system for Minecraft inspired by SAO, Elden Ring, and Genshin Impact"
 authors="Hoang Anh"
 logoFile=""
@@ -12,27 +13,13 @@ logoFile=""
 [[dependencies.rpgpack]]
     modId="forge"
     mandatory=true
-    versionRange="[47,)"
+    versionRange="[47.2,48)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.rpgpack]]
-    modId="curios"
+    modId="minecraft"
     mandatory=true
-    versionRange="[5.2.0-beta.3,)"
-    ordering="AFTER"
-    side="BOTH"
-
-[[dependencies.rpgpack]]
-    modId="epicfight"
-    mandatory=false
-    versionRange="[1.20.1-5.0.0,)"
-    ordering="AFTER"
-    side="BOTH"
-
-[[dependencies.rpgpack]]
-    modId="geckolib"
-    mandatory=false
-    versionRange="[4.2,)"
-    ordering="AFTER"
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
     side="BOTH"

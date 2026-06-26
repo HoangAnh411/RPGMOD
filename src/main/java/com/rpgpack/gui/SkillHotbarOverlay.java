@@ -1,10 +1,12 @@
 package com.rpgpack.gui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.rpgpack.classes.ClassType;
 import com.rpgpack.core.PlayerCapability;
+import com.rpgpack.core.PlayerData;
 import com.rpgpack.skills.BaseSkill;
 import com.rpgpack.skills.SkillRegistry;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
@@ -12,22 +14,20 @@ import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = "rpgpack", bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SkillHotbarOverlay {
 
-    private static final Map<String, Integer> clientCooldowns = new ConcurrentHashMap<>();
+    private static final Map<String, Integer> clientCooldowns = new HashMap<>();
+    private static final String[] KEY_LABELS = {"R", "G", "C", "V"};
+    private static final int SLOT_W = 34;
+    private static final int SLOT_H = 34;
+    private static final int SLOT_GAP = 3;
 
     public static void setClientCooldown(String skillId, int ticks) {
-        if (ticks <= 0) {
-            clientCooldowns.remove(skillId);
-        } else {
-            clientCooldowns.put(skillId, ticks);
-        }
+        if (ticks <= 0) clientCooldowns.remove(skillId);
+        else clientCooldowns.put(skillId, ticks);
     }
 
     public static int getClientCooldown(String skillId) {
@@ -35,73 +35,102 @@ public class SkillHotbarOverlay {
     }
 
     public static void clientTick() {
-        clientCooldowns.entrySet().removeIf(e -> {
-            int remaining = e.getValue() - 1;
-            if (remaining <= 0) return true;
-            e.setValue(remaining);
-            return false;
-        });
+        var iter = clientCooldowns.entrySet().iterator();
+        while (iter.hasNext()) {
+            var e = iter.next();
+            int r = e.getValue() - 1;
+            if (r <= 0) iter.remove();
+            else e.setValue(r);
+        }
     }
 
-    public static final IGuiOverlay SKILL_HOTBAR = (gui, ps, partialTick, screenWidth, screenHeight) -> {
+    private static PlayerData cachedData;
+    private static String cachedClassName;
+    private static ClassType cachedClassType;
+    private static List<BaseSkill> cachedSkills;
+
+    public static final IGuiOverlay SKILL_HOTBAR = (gui, g, partialTick, screenWidth, screenHeight) -> {
         var player = Minecraft.getInstance().player;
-        if (player == null) return;
-        if (Minecraft.getInstance().options.hideGui) return;
+        if (player == null || Minecraft.getInstance().options.hideGui) return;
 
-        var data = player.getCapability(PlayerCapability.PLAYER_DATA).orElse(null);
+        var data = cachedData;
+        if (data == null) {
+            data = player.getCapability(PlayerCapability.PLAYER_DATA).orElse(null);
+            cachedData = data;
+        }
         if (data == null) return;
-        if (data.getSelectedClass().equals("NONE")) return;
 
-        List<BaseSkill> skills = new ArrayList<>(SkillRegistry.getAll().values());
-        int skillCount = Math.min(skills.size(), 5);
-        if (skillCount == 0) return;
+        String cn = data.getSelectedClass();
+        if ("NONE".equals(cn)) return;
 
-        int barWidth = skillCount * 42 + (skillCount - 1) * 4;
-        int startX = (screenWidth - barWidth) / 2;
-        int y = screenHeight - 60;
+        ClassType ct;
+        if (cn.equals(cachedClassName) && cachedClassType != null) {
+            ct = cachedClassType;
+        } else {
+            try { ct = ClassType.valueOf(cn); }
+            catch (IllegalArgumentException e) { return; }
+            cachedClassName = cn;
+            cachedClassType = ct;
+            cachedSkills = SkillRegistry.getSkillsForClass(ct);
+        }
 
-        for (int i = 0; i < skillCount; i++) {
-            int x = startX + i * 46;
-            renderSlot(ps, x, y, skills.get(i), i + 1);
+        List<BaseSkill> skills = cachedSkills;
+        if (skills == null || skills.isEmpty()) return;
+
+        int count = Math.min(skills.size(), KEY_LABELS.length);
+        int totalH = count * SLOT_H + (count - 1) * SLOT_GAP;
+        int x = screenWidth - SLOT_W - 8;
+        int startY = screenHeight - 88 - totalH;
+
+        for (int i = 0; i < count; i++) {
+            int y = startY + i * (SLOT_H + SLOT_GAP);
+            renderSlot(g, x, y, skills.get(i), KEY_LABELS[i], data);
         }
     };
 
-    private static void renderSlot(PoseStack ps, int x, int y, BaseSkill skill, int keyNum) {
+    private static void renderSlot(GuiGraphics g, int x, int y, BaseSkill skill, String key, PlayerData data) {
         var font = Minecraft.getInstance().font;
-        int cdRemaining = getClientCooldown(skill.getSkillId());
-        boolean onCd = cdRemaining > 0;
+        int cd = getClientCooldown(skill.getSkillId());
+        int rank = data.getSkillRank(skill.getSkillId());
+        boolean onCd = cd > 0;
+        boolean locked = data.getLevel() < skill.getUnlockLevel();
 
-        // Slot background (darker if on cooldown)
-        int bgColor = onCd ? 0xCC000000 : 0x88000000;
-        fill(ps, x, y, x + 42, y + 42, bgColor);
+        int bg = onCd ? 0xCC_1A1A2E : (locked ? 0x88_1A1A1A : 0x88_162447);
+        g.fill(x, y, x + SLOT_W, y + SLOT_H, bg);
 
-        // Border (gold if ready, grey if on cd)
-        int borderColor = onCd ? 0xFF_444444 : 0xFF_888888;
-        fill(ps, x, y, x + 42, y + 1, borderColor);
-        fill(ps, x + 41, y, x + 42, y + 42, borderColor);
-        fill(ps, x, y + 41, x + 42, y + 42, borderColor);
-        fill(ps, x, y, x + 1, y + 42, borderColor);
+        int borderC = onCd ? 0xFF_333355 : (locked ? 0xFF_333333 : 0xFF_5566AA);
+        g.fill(x, y, x + SLOT_W, y + 1, borderC);
+        g.fill(x + SLOT_W - 1, y, x + SLOT_W, y + SLOT_H, borderC);
+        g.fill(x, y + SLOT_H - 1, x + SLOT_W, y + SLOT_H, borderC);
+        g.fill(x, y, x + 1, y + SLOT_H, borderC);
 
-        // Key number
-        font.drawShadow(ps, String.valueOf(keyNum), x + 3, y + 2, 0xFF_FFAA00);
+        // Key label
+        g.drawCenteredString(font, key, x + SLOT_W/2, y + 2, onCd ? 0xFF_886600 : 0xFF_FFCC00);
 
-        // Skill name
-        String name = skill.getSkillName();
-        if (name.length() > 8) name = name.substring(0, 7) + ".";
-        font.draw(ps, name, x + 3, y + 26, onCd ? 0x666666 : 0xFFFFFF);
+        // Rank badge
+        String rankName = PlayerData.RANK_NAMES[rank];
+        g.drawString(font, rankName, x + SLOT_W - font.width(rankName) - 2, y + 2, 0xFF_88CC88);
 
-        // Cooldown overlay and timer
+        // Cooldown overlay + timer
         if (onCd) {
-            float cdSeconds = cdRemaining / 20f;
-            String cdText = cdSeconds >= 1f ? String.format("%.0f", cdSeconds) : String.format("%.1f", cdSeconds);
-            font.drawShadow(ps, cdText, x + 3, y + 12, 0xFF_FF4444);
+            float pct = (float) cd / Math.max(skill.getScaledCooldown(rank), 1);
+            int oh = (int) (SLOT_H * pct);
+            g.fill(x, y, x + SLOT_W, y + oh, 0x88_000000);
+
+            String cdText = cd >= 20 ? (cd/20 + "s") : String.format("%.1f", cd/20f);
+            g.drawCenteredString(font, cdText, x + SLOT_W/2, y + SLOT_H/2 - 4, 0xFF_FF4444);
+        } else if (locked) {
+            g.drawCenteredString(font, "Lv" + skill.getUnlockLevel(), x + SLOT_W/2, y + SLOT_H/2 - 4, 0xFF_888888);
         }
 
-        // Cost indicator
+        // Resource cost at bottom
         String cost = "";
-        if (skill.getManaCost() > 0) cost = skill.getManaCost() + " MP";
-        else if (skill.getStaminaCost() > 0) cost = skill.getStaminaCost() + " SP";
-        font.draw(ps, cost, x + 3, y + 34, onCd ? 0x446688 : 0x88AAFF);
+        if (skill.getManaCost() > 0) cost = skill.getManaCost() + "M";
+        if (!cost.isEmpty()) {
+            boolean enough = skill.getManaCost() == 0 || data.getCurrentMana() >= skill.getManaCost();
+            g.drawCenteredString(font, cost, x + SLOT_W/2, y + SLOT_H - 9,
+                    enough ? 0xFF_AAAAFF : 0xFF_FF4444);
+        }
     }
 
     @SubscribeEvent

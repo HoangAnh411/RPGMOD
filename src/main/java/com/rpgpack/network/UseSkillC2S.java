@@ -1,7 +1,8 @@
 package com.rpgpack.network;
 
+import com.rpgpack.RPGPack;
 import com.rpgpack.core.PlayerCapability;
-import com.rpgpack.core.StatCalculator;
+import com.rpgpack.core.PlayerData;
 import com.rpgpack.init.ModMessages;
 import com.rpgpack.skills.BaseSkill;
 import com.rpgpack.skills.SkillCooldownManager;
@@ -35,40 +36,56 @@ public class UseSkillC2S {
             if (player == null) return;
 
             BaseSkill skill = SkillRegistry.get(msg.skillId);
-            if (skill == null) return;
+            if (skill == null) {
+                RPGPack.LOGGER.warn("[COMBAT] Unknown skill: {}", msg.skillId);
+                return;
+            }
 
             player.getCapability(PlayerCapability.PLAYER_DATA).ifPresent(data -> {
-                // Check cooldown
+                // Cooldown check
                 if (SkillCooldownManager.isOnCooldown(player, msg.skillId)) return;
 
-                // Check mana
+                // Resource checks
                 if (skill.getManaCost() > 0 && data.getCurrentMana() < skill.getManaCost()) return;
-
-                // Check stamina
-                if (skill.getStaminaCost() > 0 && data.getCurrentStamina() < skill.getStaminaCost()) return;
-
-                // Check level
                 if (data.getLevel() < skill.getUnlockLevel()) return;
 
                 // Consume resources
-                if (skill.getManaCost() > 0) {
+                if (skill.getManaCost() > 0)
                     data.setCurrentMana(data.getCurrentMana() - skill.getManaCost());
-                }
-                if (skill.getStaminaCost() > 0) {
-                    data.setCurrentStamina(data.getCurrentStamina() - skill.getStaminaCost());
-                }
 
-                // Apply cooldown (with CDR)
-                var derived = StatCalculator.calculate(data);
-                int finalCd = (int) (skill.getCooldownTicks() * (1f - derived.cooldownReduction / 100f));
-                finalCd = Math.max(finalCd, 20); // min 1 second
+                // Apply cooldown with CDR and rank scaling
+                var derived = data.getCachedStats(player);
+                int rank = data.getSkillRank(msg.skillId);
+                int baseCd = skill.getScaledCooldown(rank);
+                int finalCd = (int) (baseCd * (1f - derived.cooldownReduction / 100f));
+                finalCd = Math.max(finalCd, 20);
                 SkillCooldownManager.setCooldown(player, msg.skillId, finalCd);
 
-                // Execute skill
+                // Track target before execution for mastery
+                var beforeTarget = player.getLastHurtMob();
+
+                // Execute skill with rank-scaled damage
+                float dmg = skill.calculateDamage(player) * skill.getDamageMultiplier(rank);
                 skill.execute(player, player.level());
 
-                // Sync data back
-                var snap = new com.rpgpack.core.PlayerData();
+                // Mastery gain — award if skill hit anything (even if target died)
+                var afterTarget = player.getLastHurtMob();
+                boolean hitSomething = (afterTarget != null && afterTarget != beforeTarget) || beforeTarget != null;
+                if (hitSomething) {
+                    var masteryTarget = afterTarget != null ? afterTarget : beforeTarget;
+                    int masteryGain = masteryTarget != null ? BaseSkill.getMasteryGain(masteryTarget) : 1;
+                    data.addSkillMastery(msg.skillId, masteryGain);
+                    RPGPack.LOGGER.info("[MASTERY] +{} on {} (total: {})",
+                            masteryGain, skill.getSkillName(), data.getSkillMastery(msg.skillId));
+                }
+
+                // Combat debug log
+                RPGPack.LOGGER.info("[COMBAT] Caster={} | Skill={} | Damage={:.1f} | Mana={} | CD={}s",
+                        player.getName().getString(), skill.getSkillName(), dmg,
+                        skill.getManaCost(), finalCd / 20f);
+
+                // Sync data to client
+                PlayerData snap = new PlayerData();
                 snap.copyFrom(data);
                 ModMessages.CHANNEL.sendTo(
                         new SyncPlayerDataS2C(snap),

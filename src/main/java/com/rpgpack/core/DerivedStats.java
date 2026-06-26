@@ -4,7 +4,6 @@ public class DerivedStats {
 
     public final float maxHp;
     public final float maxMana;
-    public final float maxStamina;
     public final float physicalDamage;
     public final float magicDamage;
     public final float physicalDefense;
@@ -16,12 +15,10 @@ public class DerivedStats {
     public final float cooldownReduction;
     public final float elementalBonus;
     public final float manaRegen;
-    public final float staminaRegen;
 
     private DerivedStats(Builder builder) {
         this.maxHp = builder.maxHp;
         this.maxMana = builder.maxMana;
-        this.maxStamina = builder.maxStamina;
         this.physicalDamage = builder.physicalDamage;
         this.magicDamage = builder.magicDamage;
         this.physicalDefense = builder.physicalDefense;
@@ -33,21 +30,19 @@ public class DerivedStats {
         this.cooldownReduction = builder.cooldownReduction;
         this.elementalBonus = builder.elementalBonus;
         this.manaRegen = builder.manaRegen;
-        this.staminaRegen = builder.staminaRegen;
     }
 
     public static class Builder {
-        float maxHp, maxMana, maxStamina;
+        float maxHp, maxMana;
         float physicalDamage, magicDamage;
         float physicalDefense, magicDefense;
         float critChance, critDamage;
         float attackSpeed, moveSpeed;
         float cooldownReduction, elementalBonus;
-        float manaRegen, staminaRegen;
+        float manaRegen;
 
         public Builder maxHp(float v) { this.maxHp = v; return this; }
         public Builder maxMana(float v) { this.maxMana = v; return this; }
-        public Builder maxStamina(float v) { this.maxStamina = v; return this; }
         public Builder physicalDamage(float v) { this.physicalDamage = v; return this; }
         public Builder magicDamage(float v) { this.magicDamage = v; return this; }
         public Builder physicalDefense(float v) { this.physicalDefense = v; return this; }
@@ -59,7 +54,6 @@ public class DerivedStats {
         public Builder cooldownReduction(float v) { this.cooldownReduction = v; return this; }
         public Builder elementalBonus(float v) { this.elementalBonus = v; return this; }
         public Builder manaRegen(float v) { this.manaRegen = v; return this; }
-        public Builder staminaRegen(float v) { this.staminaRegen = v; return this; }
 
         public DerivedStats build() {
             return new DerivedStats(this);

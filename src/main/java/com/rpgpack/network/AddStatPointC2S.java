@@ -1,8 +1,13 @@
 package com.rpgpack.network;
 
+import com.rpgpack.RPGPack;
 import com.rpgpack.core.PlayerCapability;
+import com.rpgpack.core.PlayerData;
+import com.rpgpack.init.ModMessages;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -31,18 +36,38 @@ public class AddStatPointC2S {
             player.getCapability(PlayerCapability.PLAYER_DATA).ifPresent(data -> {
                 if (data.getStatPoints() <= 0) return;
 
-                switch (msg.statName.toLowerCase()) {
-                    case "str" -> data.addStr(1);
-                    case "vit" -> data.addVit(1);
-                    case "end" -> data.addEnd(1);
-                    case "agi" -> data.addAgi(1);
-                    case "dex" -> data.addDex(1);
-                    case "int" -> data.addInt(1);
-                    case "wis" -> data.addWis(1);
-                    case "luk" -> data.addLuk(1);
-                    default -> { return; }
-                }
+                boolean valid = switch (msg.statName.toLowerCase()) {
+                    case "str" -> { data.addStr(1); yield true; }
+                    case "vit" -> { data.addVit(1); yield true; }
+                    case "end" -> { data.addEnd(1); yield true; }
+                    case "agi" -> { data.addAgi(1); yield true; }
+                    case "dex" -> { data.addDex(1); yield true; }
+                    case "int" -> { data.addInt(1); yield true; }
+                    case "wis" -> { data.addWis(1); yield true; }
+                    case "luk" -> { data.addLuk(1); yield true; }
+                    default -> false;
+                };
+
+                if (!valid) return;
+
                 data.setStatPoints(data.getStatPoints() - 1);
+                data.markStatsDirty();
+
+                // Update vanilla max health attribute
+                var stats = data.getCachedStats(player);
+                player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(stats.maxHp);
+
+                RPGPack.LOGGER.info("[STAT] {} allocated -> {}, remaining points: {}",
+                        player.getName().getString(), msg.statName.toUpperCase(), data.getStatPoints());
+
+                // Sync immediately back to client
+                PlayerData snap = new PlayerData();
+                snap.copyFrom(data);
+                ModMessages.CHANNEL.sendTo(
+                        new SyncPlayerDataS2C(snap),
+                        player.connection.connection,
+                        NetworkDirection.PLAY_TO_CLIENT
+                );
             });
         });
         ctx.get().setPacketHandled(true);

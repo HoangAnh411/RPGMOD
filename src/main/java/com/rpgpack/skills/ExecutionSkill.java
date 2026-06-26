@@ -9,17 +9,20 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 
-public class ShadowStrikeSkill extends BaseSkill {
+public class ExecutionSkill extends BaseSkill {
 
-    public ShadowStrikeSkill() {
-        super("shadow_strike", "Shadow Strike", 20, 0, 100, "PHYSICAL", 1, ClassType.ASSASSIN);
+    public ExecutionSkill() {
+        super("execution", "Execution", 90, 0, 800, "PHYSICAL", 5, ClassType.ASSASSIN);
     }
 
     @Override
     public float calculateDamage(Player player) {
         var data = player.getCapability(PlayerCapability.PLAYER_DATA).orElse(null);
-        if (data == null) return 12f;
-        return 12f + data.getDex() * 2.0f;
+        if (data == null) return 20f;
+        float base = 20f + data.getDex() * 3.5f;
+        LivingEntity target = (LivingEntity) player.getLastHurtMob();
+        if (target != null && target.getHealth() / target.getMaxHealth() < 0.3f) base *= 2.0f;
+        return base;
     }
 
     @Override
@@ -35,7 +38,7 @@ public class ShadowStrikeSkill extends BaseSkill {
         if (target == null || target == player) return;
         target.hurt(player.damageSources().playerAttack(player), damage);
         var pos = player.position();
-        level.addParticle(ParticleTypes.SMOKE, pos.x, pos.y + 1, pos.z, 0, 0, 0);
-        player.playSound(SoundEvents.PHANTOM_SWOOP, 0.5f, 1.5f);
+        level.addParticle(ParticleTypes.SWEEP_ATTACK, pos.x, pos.y + 1, pos.z, 0, 0, 0);
+        player.playSound(SoundEvents.PLAYER_ATTACK_CRIT, 0.9f, 0.8f);
     }
 }

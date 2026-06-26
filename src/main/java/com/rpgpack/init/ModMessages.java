@@ -4,7 +4,9 @@ import com.rpgpack.RPGPack;
 import com.rpgpack.network.AddStatPointC2S;
 import com.rpgpack.network.ChooseClassC2S;
 import com.rpgpack.network.CooldownSyncS2C;
+import com.rpgpack.network.FloatingDamageS2C;
 import com.rpgpack.network.OpenClassSelectionS2C;
+import com.rpgpack.network.RankUpC2S;
 import com.rpgpack.network.SyncPlayerDataS2C;
 import com.rpgpack.network.UseSkillC2S;
 import net.minecraft.resources.ResourceLocation;
@@ -36,5 +38,9 @@ public class ModMessages {
                 UseSkillC2S::encode, UseSkillC2S::decode, UseSkillC2S::handle);
         CHANNEL.registerMessage(id++, CooldownSyncS2C.class,
                 CooldownSyncS2C::encode, CooldownSyncS2C::decode, CooldownSyncS2C::handle);
+        CHANNEL.registerMessage(id++, RankUpC2S.class,
+                RankUpC2S::encode, RankUpC2S::decode, RankUpC2S::handle);
+        CHANNEL.registerMessage(id++, FloatingDamageS2C.class,
+                FloatingDamageS2C::encode, FloatingDamageS2C::decode, FloatingDamageS2C::handle);
     }
 }
